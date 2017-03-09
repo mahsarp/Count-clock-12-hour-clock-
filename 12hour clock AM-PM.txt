@@ -1,0 +1,129 @@
+module count_ToNine (input clk, input reset, output [3:0] out,input ena, input starter);
+    always @(posedge clk)
+        begin
+          if(reset)
+               out=4'd0;   
+            else if (~reset & ena & starter )
+                  begin
+                      if(out==4'd9)
+                        out=4'd0;
+                       else
+                        out=out+4'd1;
+            end// ~reset
+   end//always   
+endmodule
+    
+module count_To_Five (input clk, input reset, output [3:0] out, input ena,input start_count, input starter);
+
+    always @(posedge clk)
+        begin
+          if(reset)
+               out=4'd0;   
+            else if (~reset & ena & start_count & starter)
+                  begin
+                      if(out==4'd5)
+                        out=4'd0;
+                      else
+                        out=out+4'd1;
+             end
+            end    
+  endmodule
+module sm_count ( input clk, input reset, output [7:0] out, input ena, input starter);
+    reg [3:0] r1;
+    count_ToNine instance1(clk, reset,r1,ena,starter);
+    assign out[3:0]=r1;
+    reg count_five_enable;
+    assign count_five_enable= r1[3]& ~r1[2]& ~r1[1]& r1[0];
+    count_To_Five instance2(clk, reset,out[7:4],ena,count_five_enable,starter);
+    endmodule//sm_count
+
+
+
+
+module h_counter(input clk, input reset, output [7:0] out,input ena, input starter);
+reg [3:0] r1;
+reg [3:0] r2;
+count_ToNine instance6 ( clk,  reset, r1, ena,  starter);
+count_ToNine instance7 ( clk,  reset, r2, ena,  starter);
+endmodule
+
+module top_module(
+    input clk,
+    input reset,
+    input ena,
+    output pm,
+    output [7:0] hh,
+    output [7:0] mm,
+    output [7:0] ss);
+    reg starter;
+    reg [7:0]temp;
+    reg [7:0] temp_mm;
+    reg hh_starter;
+    sm_count instance1(clk, reset, temp, ena,1);
+    assign ss=temp;
+    assign  starter=~temp[7]&temp[6]&~temp[5]&temp[4]&temp[3]&~temp[2]&~temp[1]&temp[0];
+    sm_count instance2(clk, reset, temp_mm, ena, starter);
+    assign mm=temp_mm;
+    assign hh_starter=~temp_mm[7]&temp_mm[6]&~temp_mm[5]&temp_mm[4]&temp_mm[3]&~temp_mm[2]&~temp_mm[1]&temp_mm[0]&~temp[7]&temp[6]&~temp[5]&temp[4]&temp[3]&~temp[2]&~temp[1]&temp[0];
+    reg [7:0] temp_hh;
+
+    
+    always @(posedge clk)
+     begin
+         
+         if   (~hh_starter && reset)
+                begin
+                hh[7:4]=4'd1;
+                hh[3:0]=4'd2;
+                pm=0;    
+                end
+            else  if (hh_starter)
+                begin
+                    if( hh[7:4]==4'd1 && hh[3:0]==4'd2)
+                        begin
+                            hh[7:4]=4'd0;
+                            hh[3:0]=4'd1;
+                            
+                        end
+                            
+              
+                    else 
+                         
+                         begin
+                             if(hh[3:0]!=4'd9 &&  hh[7:4]==0 )
+                      
+                                hh[3:0]=  hh[3:0]+1'b1;
+                             
+                            else if(hh[3:0]==4'd9 &&  hh[7:4]==0)
+                                 begin
+                                 hh[3:0]=4'd0;
+                                  hh[7:4]=4'd1;
+                                 end
+                             else   if(hh[3:0]!=4'd2 &&  hh[7:4]==4'd1 )
+                                  begin
+                                  hh[3:0]=  hh[3:0]+1'b1;  
+                               if(hh[3:0]==4'd2 &&  hh[7:4]==4'd1)
+                                   pm=~pm;   
+                                 end
+                             else if(hh[3:0]==4'd2 &&  hh[7:4]==4'd1)
+                                 begin
+                                  
+                                     hh[3:0]=4'd1;
+                                     hh[7:4]=4'd0;
+                                 end    
+                            
+                        
+                        end  
+                   
+                  
+                end//starter
+            
+            
+        end//alwasy
+    
+    
+    
+endmodule
+
+
+
